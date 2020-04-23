@@ -16,6 +16,7 @@ import json
 import pickle
 import errno
 import torch
+import copy
 
 from rlkit.core.tabulate import tabulate
 
@@ -79,8 +80,9 @@ class Logger(object):
 
         self._text_outputs = []
         self._tabular_outputs = []
+        file_name = 'logs/{}.txt'.format(str(datetime.datetime.now()))
 
-        self._text_fds = {}
+        self._text_fds = {'fd1':open(file_name, 'a')}
         self._tabular_fds = {}
         self._tabular_header_written = set()
 
@@ -91,6 +93,10 @@ class Logger(object):
         self._log_tabular_only = False
         self._header_printed = False
         self.table_printer = TerminalTablePrinter()
+
+    # def set_text_fds(self, dir, exp_no=1):
+    #     file_name = 'logs/'+dir+'/log'+exp_no+'.txt'
+    #     self._text_fds = {'fd1':open(file_name, 'a')}
 
     def reset(self):
         self.__init__()
@@ -155,7 +161,7 @@ class Logger(object):
     def get_log_tabular_only(self, ):
         return self._log_tabular_only
 
-    def log(self, s, with_prefix=True, with_timestamp=True):
+    def log(self, s, with_prefix=True, with_timestamp=True, file_name=None):
         out = s
         if with_prefix:
             out = self._prefix_str + out
@@ -165,8 +171,15 @@ class Logger(object):
             out = "%s | %s" % (timestamp, out)
         if not self._log_tabular_only:
             # Also log to stdout
-            print(out)
+            # print(out)
+            # print()
+            if file_name!=None:
+                file = open(file_name, 'a')
+                file.write(out+'\n')
+                file.close()
+            
             for fd in list(self._text_fds.values()):
+                # print('flushing out to file {}'.format(fd.name))
                 fd.write(out + '\n')
                 fd.flush()
             sys.stdout.flush()
@@ -252,13 +265,30 @@ class Logger(object):
             self.record_tabular(prefix + "Max" + suffix, np.nan)
 
     def dump_tabular(self, *args, **kwargs):
+        # print('in dump_tabular')
         wh = kwargs.pop("write_header", None)
         if len(self._tabular) > 0:
             if self._log_tabular_only:
                 self.table_printer.print_tabular(self._tabular)
             else:
+                file_name = kwargs.pop('file_name', None)
+                file_name2 = kwargs.pop('file_name2', None)
+                d1 = {}
+                d2 = {}
+                try: d2 = copy.deepcopy(torch.load(file_name2))
+                except: pass
+                
+                for item in self._tabular:
+                    d1[item[0]] = item[1]
+
                 for line in tabulate(self._tabular).split('\n'):
-                    self.log(line, *args, **kwargs)
+                    self.log(line, *args, **kwargs, file_name=file_name)
+                
+                if file_name2:
+                    d1_copy = copy.deepcopy(d1) 
+                    d2[d1_copy['Epoch']] = d1_copy
+                    d2_copy = copy.deepcopy(d2)
+                    torch.save(d2_copy, file_name2)
             tabular_dict = dict(self._tabular)
             # Also write to the csv files
             # This assumes that the keys in each iteration won't change!
@@ -277,7 +307,15 @@ class Logger(object):
         del self._prefixes[-1]
         self._prefix_str = ''.join(self._prefixes)
 
+    # def save_ckpt(self, epoch, trainer, ckpt_path):
+    #     torch.save({
+    #         'epoch': epoch,
+    #         'trainer': trainer
+    #     }, ckpt_path)
+
+
     def save_itr_params(self, itr, params):
+        # print('save_itr_params is being called! itr:{} params: {}'.format(itr, params))
         if self._snapshot_dir:
             if self._snapshot_mode == 'all':
                 file_name = osp.join(self._snapshot_dir, 'itr_%d.pkl' % itr)

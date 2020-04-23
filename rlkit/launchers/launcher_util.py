@@ -340,9 +340,11 @@ def set_seed(seed):
     :param seed:
     :return: None
     """
+    print('setting seed to {}'.format(seed))
     seed = int(seed)
     random.seed(seed)
     np.random.seed(seed)
+    # torch.manual_seed(seed)
 
 
 def reset_execution_environment():
@@ -565,7 +567,7 @@ def run_experiment(
                 ))
             except git.exc.InvalidGitRepositoryError:
                 pass
-    except ImportError:
+    except:
         git_infos = None
     run_experiment_kwargs = dict(
         exp_prefix=exp_prefix,
@@ -576,7 +578,7 @@ def run_experiment(
         snapshot_mode=snapshot_mode,
         snapshot_gap=snapshot_gap,
         git_infos=git_infos,
-        script_name=main.__file__,
+        script_name='nb5',
     )
     if mode == 'here_no_doodad':
         run_experiment_kwargs['base_log_dir'] = base_log_dir

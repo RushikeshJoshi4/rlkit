@@ -75,12 +75,16 @@ def experiment(variant):
         **variant['algorithm_kwargs']
     )
     algorithm.to(ptu.device)
-    algorithm.train()
+    algorithm.train(start_epoch=0)
 
 
 
 
 if __name__ == "__main__":
+    # parser = argparse.ArgumentParser()
+    # parser.add_argument('--initial_epoch', action='store_true')
+    # args = parser.parse_args()
+
     # noinspection PyTypeChecker
     variant = dict(
         algorithm="SAC",
@@ -95,6 +99,7 @@ if __name__ == "__main__":
             min_num_steps_before_training=1000,
             max_path_length=1000,
             batch_size=256,
+            initial_epoch=None
         ),
         trainer_kwargs=dict(
             discount=0.99,
@@ -103,9 +108,9 @@ if __name__ == "__main__":
             policy_lr=3E-4,
             qf_lr=3E-4,
             reward_scale=1,
-            use_automatic_entropy_tuning=True,
+            use_automatic_entropy_tuning=True
         ),
     )
     setup_logger('name-of-experiment', variant=variant)
-    # ptu.set_gpu_mode(True)  # optionally set the GPU (default=False)
+    ptu.set_gpu_mode(True)  # optionally set the GPU (default=False)
     experiment(variant)

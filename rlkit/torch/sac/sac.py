@@ -2,8 +2,6 @@ from collections import OrderedDict
 
 import numpy as np
 import torch
-import torch.optim as optim
-from torch import nn as nn
 
 import rlkit.torch.pytorch_util as ptu
 from rlkit.core.eval_util import create_stats_ordered_dict
@@ -25,7 +23,7 @@ class SACTrainer(TorchTrainer):
 
             policy_lr=1e-3,
             qf_lr=1e-3,
-            optimizer_class=optim.Adam,
+            optimizer_class=torch.optim.Adam,
 
             soft_target_tau=1e-2,
             target_update_period=1,
@@ -35,7 +33,13 @@ class SACTrainer(TorchTrainer):
             use_automatic_entropy_tuning=True,
             target_entropy=None,
     ):
+        print("starting super init")
         super().__init__()
+        print("super done")
+        print('setting torch manual seed and numpy random seed here to 1')
+        torch.manual_seed(1)
+        np.random.seed(1)
+        
         self.env = env
         self.policy = policy
         self.qf1 = qf1
@@ -44,25 +48,29 @@ class SACTrainer(TorchTrainer):
         self.target_qf2 = target_qf2
         self.soft_target_tau = soft_target_tau
         self.target_update_period = target_update_period
-
+        print("assigning done")
         self.use_automatic_entropy_tuning = use_automatic_entropy_tuning
         if self.use_automatic_entropy_tuning:
             if target_entropy:
                 self.target_entropy = target_entropy
             else:
+                print('calculating np.prod term')
                 self.target_entropy = -np.prod(self.env.action_space.shape).item()  # heuristic value from Tuomas
+            print('thats done')
             self.log_alpha = ptu.zeros(1, requires_grad=True)
+            print('initializing alpha optimizer ')
             self.alpha_optimizer = optimizer_class(
                 [self.log_alpha],
                 lr=policy_lr,
             )
-
+            print('thats done')
+        print("auto entropy thing done")
         self.plotter = plotter
         self.render_eval_paths = render_eval_paths
 
-        self.qf_criterion = nn.MSELoss()
-        self.vf_criterion = nn.MSELoss()
-
+        self.qf_criterion = torch.nn.MSELoss()
+        self.vf_criterion = torch.nn.MSELoss()
+        print("criterions done")
         self.policy_optimizer = optimizer_class(
             self.policy.parameters(),
             lr=policy_lr,
@@ -75,15 +83,25 @@ class SACTrainer(TorchTrainer):
             self.qf2.parameters(),
             lr=qf_lr,
         )
-
+        print("optimizers done")
         self.discount = discount
         self.reward_scale = reward_scale
         self.eval_statistics = OrderedDict()
         self._n_train_steps_total = 0
         self._need_to_update_eval_statistics = True
+        print("done")
 
     def train_from_torch(self, batch):
         rewards = batch['rewards']
+        # try:
+        #     # print(rewards)
+        #     # print(rewards.shape)
+        #     # print(type(rewards))
+        #     # print(rewards[0])
+        #     # print(type(rewards[0]))
+        #     pass
+        # except:
+        #     pass
         terminals = batch['terminals']
         obs = batch['observations']
         actions = batch['actions']

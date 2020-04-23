@@ -1,5 +1,5 @@
 import abc
-
+import torch
 import gtimer as gt
 from rlkit.core.rl_algorithm import BaseRLAlgorithm
 from rlkit.data_management.replay_buffer import ReplayBuffer
@@ -23,6 +23,7 @@ class BatchRLAlgorithm(BaseRLAlgorithm, metaclass=abc.ABCMeta):
             num_trains_per_train_loop,
             num_train_loops_per_epoch=1,
             min_num_steps_before_training=0,
+            initial_epoch=0
     ):
         super().__init__(
             trainer,
@@ -31,6 +32,7 @@ class BatchRLAlgorithm(BaseRLAlgorithm, metaclass=abc.ABCMeta):
             exploration_data_collector,
             evaluation_data_collector,
             replay_buffer,
+            initial_epoch
         )
         self.batch_size = batch_size
         self.max_path_length = max_path_length
@@ -41,7 +43,15 @@ class BatchRLAlgorithm(BaseRLAlgorithm, metaclass=abc.ABCMeta):
         self.num_expl_steps_per_train_loop = num_expl_steps_per_train_loop
         self.min_num_steps_before_training = min_num_steps_before_training
 
-    def _train(self):
+    def store_everything(self, ckpt_path):
+        d = {
+            
+        }
+        torch.save(d, ckpt_path)
+
+    def _train(self, initial_epoch=0):
+        self._start_epoch = initial_epoch
+        # print('\n\n\n\nn\n\n\n\nin _train #########')
         if self.min_num_steps_before_training > 0:
             init_expl_paths = self.expl_data_collector.collect_new_paths(
                 self.max_path_length,
@@ -50,17 +60,20 @@ class BatchRLAlgorithm(BaseRLAlgorithm, metaclass=abc.ABCMeta):
             )
             self.replay_buffer.add_paths(init_expl_paths)
             self.expl_data_collector.end_epoch(-1)
+         
+        # for epoch in gt.timed_for(
+        #         range(self._start_epoch, self.num_epochs),
+        #         save_itrs=True,
+        # ):
 
-        for epoch in gt.timed_for(
-                range(self._start_epoch, self.num_epochs),
-                save_itrs=True,
-        ):
+        for epoch in range(self._start_epoch, self.num_epochs):
+
             self.eval_data_collector.collect_new_paths(
                 self.max_path_length,
                 self.num_eval_steps_per_epoch,
                 discard_incomplete_paths=True,
             )
-            gt.stamp('evaluation sampling')
+            # # gt.stamp('evaluation sampling')
 
             for _ in range(self.num_train_loops_per_epoch):
                 new_expl_paths = self.expl_data_collector.collect_new_paths(
@@ -68,17 +81,17 @@ class BatchRLAlgorithm(BaseRLAlgorithm, metaclass=abc.ABCMeta):
                     self.num_expl_steps_per_train_loop,
                     discard_incomplete_paths=False,
                 )
-                gt.stamp('exploration sampling', unique=False)
+                # # gt.stamp('exploration sampling', unique=False)
 
                 self.replay_buffer.add_paths(new_expl_paths)
-                gt.stamp('data storing', unique=False)
+                # # gt.stamp('data storing', unique=False)
 
                 self.training_mode(True)
                 for _ in range(self.num_trains_per_train_loop):
                     train_data = self.replay_buffer.random_batch(
                         self.batch_size)
                     self.trainer.train(train_data)
-                gt.stamp('training', unique=False)
+                # # gt.stamp('training', unique=False)
                 self.training_mode(False)
 
             self._end_epoch(epoch)

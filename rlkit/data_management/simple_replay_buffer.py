@@ -33,7 +33,7 @@ class SimpleReplayBuffer(ReplayBuffer):
         self._env_infos = {}
         for key, size in env_info_sizes.items():
             self._env_infos[key] = np.zeros((max_replay_buffer_size, size))
-        self._env_info_keys = env_info_sizes.keys()
+        self._env_info_keys = list(env_info_sizes.keys())
 
         self._top = 0
         self._size = 0
@@ -68,7 +68,7 @@ class SimpleReplayBuffer(ReplayBuffer):
             next_observations=self._next_obs[indices],
         )
         for key in self._env_info_keys:
-            assert key not in batch.keys()
+            assert key not in list(batch.keys())
             batch[key] = self._env_infos[key][indices]
         return batch
 

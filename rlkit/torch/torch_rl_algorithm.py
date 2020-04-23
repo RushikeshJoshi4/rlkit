@@ -21,6 +21,42 @@ class TorchOnlineRLAlgorithm(OnlineRLAlgorithm):
 
 
 class TorchBatchRLAlgorithm(BatchRLAlgorithm):
+    # def __init__(
+    #         self,
+    #         trainer,
+    #         exploration_env,
+    #         evaluation_env,
+    #         exploration_data_collector: PathCollector,
+    #         evaluation_data_collector: PathCollector,
+    #         replay_buffer: ReplayBuffer,
+    #         batch_size,
+    #         max_path_length,
+    #         num_epochs,
+    #         num_eval_steps_per_epoch,
+    #         num_expl_steps_per_train_loop,
+    #         num_trains_per_train_loop,
+    #         num_train_loops_per_epoch=1,
+    #         min_num_steps_before_training=0,
+    #         initial_epoch=0):
+    #     super().__init__(
+    #         trainer,
+    #         exploration_env,
+    #         evaluation_env,
+    #         exploration_data_collector,
+    #         evaluation_data_collector,
+    #         replay_buffer,
+    #         batch_size,
+    #         max_path_length,
+    #         num_epochs,
+    #         num_eval_steps_per_epoch,
+    #         num_expl_steps_per_train_loop,
+    #         num_trains_per_train_loop,
+    #         num_train_loops_per_epoch=1,
+    #         min_num_steps_before_training=0,
+    #         initial_epoch=0
+    #     )
+
+
     def to(self, device):
         for net in self.trainer.networks:
             net.to(device)

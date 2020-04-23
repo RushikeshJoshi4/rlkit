@@ -108,6 +108,9 @@ def rollout(
     path_length = 0
     if render:
         env.render(**render_kwargs)
+        # print(render_kwargs)
+        # w = h =
+        # env.sim.render(w, h, **render_kwargs)
     while path_length < max_path_length:
         a, agent_info = agent.get_action(o)
         next_o, r, d, env_info = env.step(a)

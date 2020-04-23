@@ -51,7 +51,7 @@ class OnlineVaeAlgorithm(TorchBatchRLAlgorithm):
 
     def _end_epoch(self, epoch):
         self._train_vae(epoch)
-        gt.stamp('vae training')
+        # gt.stamp('vae training')
         super()._end_epoch(epoch)
 
     def _log_stats(self, epoch):
