@@ -9,3 +9,8 @@ MANIFEST
 \.idea/
 *.pkl
 *.txt
+*.log
+*.json
+*.csv
+logs/*
+*.patch
